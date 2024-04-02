@@ -12,6 +12,3 @@ https://github.com/hans61/Minimal-64x4/tree/main/hardware/SN76489/player
 ## A sound example
 
 https://github.com/hans61/Minimal-64x4/tree/main/hardware/SN76489/examples
-
-I tried to include it:
-![ChrisKelly](examples/)
