@@ -1,0 +1,14 @@
+STA      -> STB
+LYI nn   -> LIZ nn, <rY
+DEX      -> DEZ <rX
+INY      -> INZ <rY
+TYA      -> LDF <rY
+LYA	aaaa -> LDA aaaa STZ <rY
+LLn      -> LnL
+RLn      -> RnL
+
+#mute
+
+#org 0x0003                                         ; place all variables in fast page
+rX: 0
+rY: 0
