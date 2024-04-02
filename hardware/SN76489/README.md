@@ -14,4 +14,4 @@ https://github.com/hans61/Minimal-64x4/tree/main/hardware/SN76489/player
 https://github.com/hans61/Minimal-64x4/tree/main/hardware/SN76489/examples
 
 I tried to include it:
-https://github.com/hans61/Minimal-64x4/tree/main/hardware/SN76489/examples/ChrisKelly.mp3
+![ChrisKelly](examples/ChrisKelly.mp3)
