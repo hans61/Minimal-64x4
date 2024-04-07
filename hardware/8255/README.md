@@ -2,4 +2,5 @@
 
 ![schematic](io-test-8255.sch.png)
 
+![picture](io-test-8255.jpg)
 
