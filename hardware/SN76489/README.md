@@ -15,11 +15,14 @@ I will make some more changes.
 
 The board uses the following I/O addresses
 
-0xfee0 -> Out1 = SN76489 D0..7
-0xfee1 -> Out2
-0xfee2 -> In
-0xfee6 -> SN76489 /WE high
-0xfee7 -> SN76489 /WE low
+|---------|---------------------|
+| address | comment             |
+|---------|---------------------|
+| 0xfee0 | Out1 = SN76489 D0..7 |
+| 0xfee1 | Out2                 |
+| 0xfee2 | In                   |
+| 0xfee6 | SN76489 /WE high     |
+| 0xfee7 | SN76489 /WE low      |
 
 ## A simple Player
 
