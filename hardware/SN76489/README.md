@@ -40,3 +40,7 @@ https://github.com/hans61/Minimal-64x4/tree/main/hardware/SN76489/examples
 
 The original file is ChrisKelly.vgm, the vgm converter became ChrisKelly.bin.
 ChrisKelly.hex is the file for the minimal 64x4, which is loaded to 0x8000.
+
+I made a very simple video of it:
+
+https://youtu.be/yanbZCrXf6M
