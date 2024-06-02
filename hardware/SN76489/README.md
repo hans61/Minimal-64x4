@@ -9,7 +9,7 @@ There is also a freely available output port.
 ![schematic](eagle/20240511-sn76489-kempton-ver1.sch.png)
 
 
-![first board](eagle/test-board.jpg)
+![second board](picture/expansion1-rev3.jpg)
 
 The board uses the following I/O addresses
 
@@ -42,3 +42,5 @@ ChrisKelly.hex is the file for the minimal 64x4, which is loaded to 0x8000.
 I made a very simple video of it:
 
 https://youtu.be/yanbZCrXf6M
+
+![second board](picture/expansion1-rev3-joystick.jpg)
