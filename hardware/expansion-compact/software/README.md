@@ -10,14 +10,14 @@ test-joystick.asm
 
 Tests a Kempston compatible joystick on the port and outputs pressed keys.
 
-![joystick test](picture/tstjoystick.jpg)
+![joystick test](../picture/tstjoystick.jpg)
 
 vgcplay.asm
 
 Plays a vgm file for the SN76489. The data must be in a special format,
 identified by the file extension vgc.
 
-![play vgc](picture/vgcplay.jpg)
+![play vgc](../picture/vgcplay.jpg)
 
 ## SD card support
 
@@ -38,7 +38,7 @@ sd_dir_root.asm
 Shows the root directory of an SD card. The size of a file is displayed in hexadecimal.
 System files and hidden files are hidden.
 
-![dir sd card](picture/sd_dir_root.jpg)
+![dir sd card](../picture/sd_dir_root.jpg)
 
 sd_read_fat32.asm
 
@@ -46,6 +46,6 @@ Opens a directory on the SD card and reads a file in the directory into memory.
 There must be a directory "SUBFOLDR" in the root and this directory must contain a file called
 "DEEPFILE.TXT".
 
-![open file](picture/open-dir-read-file.jpg)
+![open file](../picture/open-dir-read-file.jpg)
 
 
