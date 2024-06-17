@@ -6,6 +6,11 @@
 
 ![schematic](picture/minimal64x4-with-multiexpansion.jpg)
 
+The current software for this extension
+
+https://github.com/hans61/Minimal-64x4/tree/main/hardware/expansion-compact/software
+
+## Schematic
 ![schematic](eagle/expansion-sn76489-kempton-sd-rev4.sch.png)
 
 
