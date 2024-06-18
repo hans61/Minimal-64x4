@@ -16,6 +16,15 @@ Tests a Kempston compatible joystick on the port and outputs pressed keys.
 
 Plays a vgm file for the SN76489. The data must be in a special format,
 identified by the file extension vgc.
+Some example sounds can be found here:
+
+https://github.com/hans61/Minimal-64x4/tree/main/hardware/expansion-compact/software/vgc-examples
+
+Some original shots from my Minimal 64x4:
+
+https://github.com/hans61/Minimal-64x4/blob/main/hardware/expansion-compact/software/vgc-examples/chriskelly.vgc.m4a
+
+https://github.com/hans61/Minimal-64x4/blob/main/hardware/expansion-compact/software/vgc-examples/goldenbrown.vgc.m4a
 
 ![play vgc](../picture/vgcplay.jpg)
 
