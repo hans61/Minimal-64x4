@@ -393,16 +393,19 @@ spcshiftloopdone:
 	STZ zp_sd_address+1
 
 	; Copy out the next cluster in the chain for later use
-	LZB RegY,zp_sd_address
+	MVV zp_sd_address,zp_h_address
+	AZV RegY,zp_h_address
+	LDT zp_h_address
 	STB fat32_nextcluster
-	INZ RegY
-	LZB RegY,zp_sd_address
+
+	INV zp_h_address
+	LDT zp_h_address	
 	STB fat32_nextcluster+1
-	INZ RegY
-	LZB RegY,zp_sd_address
+	INV zp_h_address
+	LDT zp_h_address	
 	STB fat32_nextcluster+2
-	INZ RegY
-	LZB RegY,zp_sd_address
+	INV zp_h_address
+	LDT zp_h_address	
 	ANI 0x0f
 	STB fat32_nextcluster+3
 
