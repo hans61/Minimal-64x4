@@ -27,7 +27,7 @@ dataLoop:
 	JAS wrSN76489
 	JPA dataLoop
 noData:
-	JPS wait50ms
+	JPS wait20ms
 	INW ptrSound
 	LDT ptrSound STZ counter
 	JPA songLoop
@@ -35,8 +35,8 @@ finish:
 	JPS SilenceAllChannels
 	JPA _Prompt
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-wait50ms:
-	MIZ 35,regB		; 40 
+wait20ms:
+	MIZ 30,regB		; 50Hz -> 20ms
 waitLoop:
 	JPS wait1ms		; 997,25µS | 997,25+0,625+0,5+1,625=1000
 	LR6				; 1,625µS
