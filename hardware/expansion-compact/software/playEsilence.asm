@@ -7,6 +7,8 @@
 main:
     JPS _Clear
     LDI 10 JAS delay_ms     				; give card time to power up
+
+loop:
     JPS _Print "SD init...", 10, 0
     JPS SD_init
     CPI 0x00
@@ -25,80 +27,115 @@ initsuccess:
     JPS _Print "Open Root", 10, 0
 	JPS fat32_openroot
 	; Find subdirectory by name
-readEntry:
-	JPS fat32_readdirent
-	BCC nextEntry
-	JPA _Prompt 
-nextEntry:
-	MIZ 11,Z0
-	MIZ 14,Z1
-	MVV zp_sd_address,zp_h_address
-	AIV 11,zp_h_address
-	LDT zp_h_address
-	STB Attr
-	MVV zp_sd_address,zp_h_address
-	LDB Attr
-	ANI 0x08			; Volume-Label
+	MIZ <subdirname, RegX
+	MIZ >subdirname, RegY
+	JPS fat32_finddirent
+	BCC foundsubdir
+    JPS _Print "Dir not found", 10, 0
+	JPS _WaitInput
+	JPS printBuffer
+    JPA _Prompt
+foundsubdir:
+    JPS _Print "Subdir found", 10, 0
+	JPS fat32_opendirent
+    JPS _Print "Open Dir", 10, 0
+	;JPS _WaitInput
+	; Find file by name
+	MIZ <filename, RegX
+	MIZ >filename, RegY
+	JPS fat32_finddirent
+	BCC foundfile
+	; File not found
+    JPS _Print "File not found", 10, 0
+	;JPS printBuffer
+    JPA _Prompt
+foundfile:
+	; Open file
+    JPS fat32_opendirent
+	;JPS _WaitInput
+    ;JPS _Print "File content:", 10, 0
+
+	; Read file contents into buffer2
+	;MIW buffer2,fat32_address JPS fat32_file_read JPS printBuffer2 JPA goOS
+	
+	; print
+;	MIZ 0xff,zp_sd_address+1
+;printNext:
+;	JPS fat32_file_readbyte
+;	BCS goOS
+;	JAS _PrintHex
+;	JPA printNext
+;goOS:
+;    JPS _Print 10, 0
+;    JPA _Prompt
+songLoop:	
+	JPS fat32_file_readbyte
+	BCC songL1
+EOF:
+    JPS _Print "End of File", 10, 0
+	JPS SilenceAllChannels
+    JPA _Prompt
+songL1:	
+	STZ counter
+songL2:	
+	LDZ counter
+	CPI 0xff
+	BEQ finish
+dataLoop:
+	LDZ counter
 	CPI 0x00
-	BNE printVolumeLabel
-	LDB Attr
-	ANI 0x04			; System
-	CPI 0x00
-	BNE readEntry
-nextE1:	
-	LDT zp_h_address
-	CPI 0x20
-	BEQ nextE3
-	PHS
-	CIZ 3,Z0
-	BNE nextE2
-	LDI 0x2e JAS _PrintChar
-	DEZ Z1
-nextE2:
-	PLS
-	JAS _PrintChar
-	DEZ Z1
-nextE3:
-	INV zp_h_address
-	DEZ Z0
-	BNE nextE1
-nextE4:
-	CIZ 0x00,Z1
-	BEQ nextE5
-	LDI 0x20 JAS _PrintChar
-	DEZ Z1
-	JPA nextE4
-nextE5:
-	LDB Attr
-	ANI 0x10			; Dir
-	CPI 0x00
-	BEQ nextE6
-	JPS _Print "<DIR>",0
-	JPA nextE9
-nextE6:
-	AIV 20,zp_h_address
-	LDT zp_h_address JAS _PrintHex
-	DEV zp_h_address
-	LDT zp_h_address JAS _PrintHex
-	DEV zp_h_address
-	LDT zp_h_address JAS _PrintHex
-	DEV zp_h_address
-	LDT zp_h_address JAS _PrintHex
-nextE9:
-	LDI 10 JAS _PrintChar
-	JPA readEntry
-printVolumeLabel:
-	JPS _Print "Volume-Label: ",0
-	MIZ 11,Z0
-printVL1:
-	LDT zp_h_address
-	JAS _PrintChar
-	INV zp_h_address
-	DEZ Z0
-	BNE printVL1
-	JPA nextE9
-Attr:
-	0x00
+	BEQ noData
+	DEZ counter
+	JPS fat32_file_readbyte
+	BCS EOF
+	JAS wrSN76489
+	JPA dataLoop
+noData:
+	JPS wait50ms
+	;INW ptrSound
+	;LDT ptrSound STZ counter
+	JPA songLoop
+finish:
+	JPS SilenceAllChannels
+	JPA _Prompt
+
+subdirname:	"VGC        "		; 
+;filename:	"ADDICTS VGC"		; 
+;filename:	"DDANCINGVGC"		; 
+filename:	"ESILENCEVGC"		; 
+;filename:	"GOLDENBRVGC"		; 
+;filename:	"ITSASIN VGC"		; 
+;filename:	"REMIX89 VGC"		; 
+;filename:	"WAGAIN  VGC"		; 
+;###############################################################################
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+wait50ms:
+	MIZ 20,regB		; 40 
+waitLoop:
+	JPS wait1ms		; 997,25µS | 997,25+0,625+0,5+1,625=1000
+	LR6				; 1,625µS
+	DEZ regB		; 0,625µS
+	BNE waitLoop		; 0,5µS/0,375µS -> 256 * 0,5+0,625+997,25=998,375 * 256 = 255,584mS
+	RTS				; 1,25µ + JPS 1,375µS
+
+wait1ms: MIZ 194,regA	; 4 (*0,125µS=0,5µS)			-> (0,5+999,25+2,625)µS | 195~1002,375 194~997,25µS
+w1ms: NOP NOP DEZ regA BNE w1ms	; (32+5+4[3]) * 195 = 7994 = 999,25µS
+	RTS						; 10 (+11 für JSR) = 2,625µS
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; write A to SN76489
+wrSN76489:
+	STB sn76489
+	MIB 0x02,cs1	; CLB rwLow
+	NOP NOP NOP NOP	; (NOP = 2µS) the SN764898 requires 8µs at 4Mhz (16µs at 2Mhz)
+	MIB 0x00,cs1	; CLB rwHigh
+	RTS
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+SilenceAllChannels:
+	LDI 0x9f JAS wrSN76489
+	LDI 0xbf JAS wrSN76489
+	LDI 0xdf JAS wrSN76489
+	LDI 0xff JAS wrSN76489
+	RTS
 ; ################################## Subroutines ###################################
 cs1on:
     MIB 0xff,spi NOP
@@ -110,8 +147,6 @@ cs1off:
     MIB 0x00,cs1
     MIB 0xff,spi NOP
 	RTS
-
-
 
 ; ----------------------------------------------
 ; |             Begin Init FAT32               |
@@ -293,43 +328,52 @@ p256a:
 ; ----------------------------------------------
 fat32_seekcluster:
 	; Gets ready to read fat32_nextcluster, and advances it according to the FAT
-
+	; Bereitet sich auf das Lesen von fat32_nextcluster vor und führt es gemäß der FAT weiter
+	
 	; FAT sector = (cluster*4) / 512 = (cluster*2) / 256
-	LDB fat32_nextcluster
-	LL1
-	LDB fat32_nextcluster+1
-	RL1
-	STB zp_sd_currentsector
-	LDB fat32_nextcluster+2
-	RL1
-	STB zp_sd_currentsector+1
-	LDB fat32_nextcluster+3
-	RL1
-	STB zp_sd_currentsector+2
+	LDB fat32_nextcluster			; 0x00001011 (0xb) 
+	LL1								; 0x00010110 C=0
+	LDB fat32_nextcluster+1			; 0x00000000
+	RL1								; 0x00000000
+	STB zp_sd_currentsector			; 0x00000000 #
+	LDB fat32_nextcluster+2			; 0x00000000
+	RL1								; 0x00000000
+	STB zp_sd_currentsector+1		; 0x00000000 #
+	LDB fat32_nextcluster+3			; 0x00000000
+	RL1								; 0x00000000
+	STB zp_sd_currentsector+2		; 0x00000000 #
 	; note: cluster numbers never have the top bit set, so no carry can occur
+	; Hinweis: Bei Clusternummern ist das oberste Bit nie gesetzt, daher kann kein Übertrag auftreten
+	; fat32_nextcluster unverändert -> zp_sd_currentsector
 
 	; Add FAT starting sector zp_sd_currentsector = zp_sd_currentsector + fat32_fatstart
-	LDZ zp_sd_currentsector
-	ADB fat32_fatstart
-	STZ zp_sd_currentsector
-	LDZ zp_sd_currentsector+1
-	ACB fat32_fatstart+1
+	LDZ zp_sd_currentsector			; 
+	ADB fat32_fatstart				;
+	STZ zp_sd_currentsector			;
+	
+	LDZ zp_sd_currentsector+1		;
+	ACB fat32_fatstart+1			;
 	STZ zp_sd_currentsector+1
+	
 	LDZ zp_sd_currentsector+2
 	ACB fat32_fatstart+2
 	STZ zp_sd_currentsector+2
+	
 	LDI 0x00
 	ACB fat32_fatstart+3
-	STZ zp_sd_currentsector+3
+	STZ zp_sd_currentsector+3		; zp_sd_currentsector gesetzt auf aktuellen Sector in FAT
 
 	; Target buffer
     MIV fat32_readbuffer, zp_sd_address
-	; Read the sector from the FAT
-	JPS sd_readsector
+	; Read the sector from the FAT !!! ####
+	JPS sd_readsector				; richtiger FAT Sector geladen
 
 	; Before using this FAT data, set currentsector ready to read the cluster itself
 	; We need to multiply the cluster number minus two by the number of sectors per 
 	; cluster, then add the data region start sector
+	; Bevor Sie diese FAT-Daten verwenden, machen Sie currentsector bereit, um den Cluster selbst zu lesen
+	; Wir müssen die Clusternummer minus zwei mit der Anzahl der Sektoren pro
+	; Cluster multiplizieren und dann den Startsektor des Datenbereichs hinzufügen
 
 	; Subtract two from cluster number
 	LDB fat32_nextcluster
@@ -343,7 +387,7 @@ fat32_seekcluster:
 	STZ zp_sd_currentsector+2
 	LDB fat32_nextcluster+3
 	SCI 0x00
-	STZ zp_sd_currentsector+3
+	STZ zp_sd_currentsector+3		; zp_sd_currentsector = fat32_nextcluster -2
 
 	; Multiply by sectors-per-cluster which is a power of two between 1 and 128
 	LDB fat32_sectorspercluster
@@ -356,7 +400,7 @@ spcshiftloop:
 	RLZ zp_sd_currentsector+2
 	RLZ zp_sd_currentsector+3
 	PLS
-	JPA spcshiftloop
+	JPA spcshiftloop				; zp_sd_currentsector = zp_sd_currentsector * fat32_sectorspercluster = (fat32_nextcluster -2) * fat32_sectorspercluster
 
 spcshiftloopdone:
 	; Add the data region start sector
@@ -371,21 +415,27 @@ spcshiftloopdone:
 	STZ zp_sd_currentsector+2
 	LDZ zp_sd_currentsector+3
 	ACB fat32_datastart+3
-	STZ zp_sd_currentsector+3
+	STZ zp_sd_currentsector+3	; zp_sd_currentsector = zp_sd_currentsector + fat32_datastart
 
 	; That's now ready for later code to read this sector in - tell it how many consecutive
 	; sectors it can now read
+	; Das ist jetzt bereit für den späteren Code, der diesen Sektor einliest - teilen Sie ihm mit, wie viele aufeinanderfolgende
+	; Sektoren er jetzt lesen kann
+	
 	LDB fat32_sectorspercluster
-	STB fat32_pendingsectors
+	STB fat32_pendingsectors	; fat32_pendingsectors = fat32_sectorspercluster
 
 	; Now go back to looking up the next cluster in the chain
 	; Find the offset to this cluster's entry in the FAT sector we loaded earlier
+	; Gehen Sie nun zurück zur Suche nach dem nächsten Cluster in der Kette
+	; Suchen Sie den Offset zum Eintrag dieses Clusters im FAT-Sektor, den wir zuvor geladen haben
 
 	; Offset = (cluster*4) & 511 = (cluster & 127) * 4
-	LDB fat32_nextcluster
-	ANI 0x7f
-	LL2
-	STZ RegY		; Y = low byte of offset
+	; 512 / 4 = 128 (0x7f) 1 Sector = 128 Cluster Pointer
+	LDB fat32_nextcluster		; 0x0b = 0b00001011
+	ANI 0x7f					; 0b00001011
+	LL2							; 0b00101100 = 0x2c
+	STZ RegY		       		; Y = low byte of offset
 
 	; Add the potentially carried bit to the high byte of the address
 	; Carry von LL2
@@ -429,6 +479,19 @@ spcshiftloopdone:
 	; Es ist das Ende der Kette, setzen Sie die oberen Bits, damit wir dies später erkennen können
 	STB fat32_nextcluster+3
 notendofchain:
+	; Begin Debug
+	; zp_sd_address = ist Zeiger auf Buffer = 0x3000
+	;JPS _Print "zp_sd_address:",0
+	;LDZ zp_sd_address+1 JAS _PrintHex
+	;LDZ zp_sd_address+0 JAS _PrintHex
+
+	; JPS _Print "fat32_nextcluster:",0
+	; LDB fat32_nextcluster+3 JAS _PrintHex
+	; LDB fat32_nextcluster+2 JAS _PrintHex
+	; LDB fat32_nextcluster+1 JAS _PrintHex
+	; LDB fat32_nextcluster+0 JAS _PrintHex
+	; JPS _Print 10,0
+	; End Debug
 	RTS
 ; ----------------------------------------------
 ; |              End Seekcluster               |
@@ -441,20 +504,23 @@ fat32_readnextsector:
 	;
 	; Advances the current sector ready for the next read and looks up the next cluster
 	; in the chain when necessary.
-	;
+	; [[Macht den aktuellen Sektor bereit für den nächsten Lesevorgang und sucht bei Bedarf nach dem nächsten Cluster
+	; in der Kette.
+	;]]
 	; On return, carry is clear if data was read, or set if the cluster chain has ended.
 
-	; Maybe there are pending sectors in the current cluster
+	; Maybe there are pending sectors in the current cluster [[Möglicherweise gibt es ausstehende Sektoren im aktuellen Cluster]]
 	LDB fat32_pendingsectors
 	CPI 0x00
 	BNE readsector
 
-	; No pending sectors, check for end of cluster chain
+	; No pending sectors, check for end of cluster chain [[Keine ausstehenden Sektoren, prüfen Sie das Ende der Clusterkette]]
 	LDB fat32_nextcluster+3
 	CPI 0x00
 	BMI endofchain
 
-	; Prepare to read the next cluster
+	; Prepare to read the next cluster #### Problem
+	; JPS _Print "Prepare to read the next cluster", 10, 0
 	JPS fat32_seekcluster
 
 readsector:
@@ -525,7 +591,7 @@ fat32_opendirent:
 	;
 	; Point zp_sd_address at the dirent
 
-	; Seek to first cluster
+	; Seek to first cluster => fat32_nextcluster (4 Byte) erster Cluster 
 	MVV zp_sd_address,zp_h_address
 	AIV 20,zp_h_address					; zp_sd_address+20
 	LDT zp_h_address	
@@ -541,7 +607,7 @@ fat32_opendirent:
 	LDT zp_h_address
 	STB fat32_nextcluster+1
 
-	; Remember file size in bytes remaining zp_sd_address+28
+	; Remember file size in bytes remaining zp_sd_address+28 => fat32_bytesremaining (4 Byte) 
 	INV zp_h_address
 	LDT zp_h_address
 	STB fat32_bytesremaining+0
@@ -562,7 +628,14 @@ fat32_opendirent:
 	LDB fat32_bytesremaining+1 JAS _PrintHex
 	LDB fat32_bytesremaining+0 JAS _PrintHex
 	JPS _Print 10,0
-	; End Debug
+	; Begin Debug
+	;JPS _Print "fat32_nextcluster:",0
+	;LDB fat32_nextcluster+3 JAS _PrintHex
+	;LDB fat32_nextcluster+2 JAS _PrintHex
+	;LDB fat32_nextcluster+1 JAS _PrintHex
+	;LDB fat32_nextcluster+0 JAS _PrintHex
+	;JPS _Print 10,0
+	; End Debug	; End Debug
 
 	JPS fat32_seekcluster
 
@@ -838,15 +911,15 @@ sectorCNT: 0x00
 ; token = 0xFF - timeout
 
 sd_readsector:
-	;; debug ####
-	;JPS _Print "Read Sector: ",0
-    ;LDZ zp_sd_currentsector+3 JAS _PrintHex
-    ;LDZ zp_sd_currentsector+2 JAS _PrintHex
-    ;LDZ zp_sd_currentsector+1 JAS _PrintHex
-    ;LDZ zp_sd_currentsector+0 JAS _PrintHex
-	;;JPS _WaitInput
-	;JPS _Print 10,0
-	;; debug end
+	; debug ####
+	JPS _Print "Read Sector: ",0
+    LDZ zp_sd_currentsector+3 JAS _PrintHex
+    LDZ zp_sd_currentsector+2 JAS _PrintHex
+    LDZ zp_sd_currentsector+1 JAS _PrintHex
+    LDZ zp_sd_currentsector+0 JAS _PrintHex
+	;JPS _WaitInput
+	JPS _Print 10,0
+	; debug end
 	
     MIB 0xff,token                      ; token = 0xff
 	JPS cs1on
@@ -1279,7 +1352,7 @@ Z1:     0x0000,
 Z2:     0x00,
 Z3:     0x00,
 tmp:    0x00,
-
+counter: 0x00,
 
 zp_sd_address: 0x00, 0x00						; 2 bytes
 zp_sd_currentsector: 0x00, 0x00, 0x00, 0x00		; 4 bytes -> CMD17, CMD24
@@ -1287,6 +1360,7 @@ zp_h_address: 0x00, 0x00
 
 ;;#org 0xfe80 spi:    ; address for reading and writing the spi shift register, writing starts the beat
 ;;#org 0xfe90 cs1:    ; bit 0 = 1 -> /CS = 0 | bit 0 = 0 -> /CS = 1
+#org 0xfee0 sn76489:	; SN76489 data port (4HC574)
 #org 0xfee3 spi:    ; address for reading and writing the spi shift register, writing starts the beat
 #org 0xfee2 cs1:    ; bit 0 = 1 -> /CS = 0 | bit 0 = 0 -> /CS = 1
 
