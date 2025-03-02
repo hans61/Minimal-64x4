@@ -1,4 +1,5 @@
 # Extensions Compact for the minimal 64x4
+# This version is outdated!!! I will publish the current one in the next days
 
 - Kempston Joytick Interface with 74HC574
 - Sound with SN76489
